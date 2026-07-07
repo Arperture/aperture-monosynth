@@ -34,7 +34,8 @@ Click the POWER LED on the performance plate (or just play) to start audio.
   SQ (unipolar, heritage quirk) / **S&H**. **OSC MOD** routes the LFO to both
   oscillators; **OSC 2 MOD** routes it to oscillator 2 alone (beating and,
   with SYNC on, LFO-driven sync sweeps).
-- **SUB OSCILLATOR** — square, tracks OSC 1, RANGE −1 or −2 octaves; own MIXER level.
+- **SUB OSCILLATOR** — tracks OSC 1, RANGE −1 or −2 octaves, **WAVE square or
+  sine** (sine gives a clean sub-bass and a smoother filter growl); own MIXER level.
 - **CONTOURS** — real ADSR on vertical sliders (1 ms – 10 s log ranges).
 - **VEL→CUTOFF** (FILTER section) — note velocity tracks the filter: full-force
   strikes open to the CUTOFF knob setting, soft strikes close it by up to
@@ -90,6 +91,17 @@ Saving opens a small naming dialog (Enter to confirm, Esc to cancel). Filled
 slots show their name in the dropdown; empty ones read "· empty". Patches and
 sequences are independent, so any sequence can play under any patch.
 
+## Setup (MIDI & audio devices)
+
+Open **Setup** from the button at the right of the bottom strip, or from the
+top menu bar (**Aperture ▸ Setup…**, or ⌘,). You can choose:
+
+- **MIDI input** — "All devices (Omni)" or a specific Core MIDI input.
+- **Audio output** — the system default or a specific output device. Routing
+  applies immediately to the running engine.
+
+Both choices persist between launches.
+
 ## MIDI Learn
 
 Every knob and slider can be re-assigned to any controller knob:
@@ -131,6 +143,7 @@ sliders). Knobs/sliders take 0–127; switches split the range per position.
 | 107| Oscillator Mod | 109 | Mod Shape (4-pos) |
 | 108| Filter Mod | 110 | Kbd Tracking |
 | 112| Sub Octave | 80 | Vel→Cutoff on/off |
+| 81 | Sub Wave (sq/sine) | | |
 
 Voicing and FX constants are grouped under `TUNE BY EAR` at the top of
 `app/audio/aperture-processor.js`. The heritage voice behaviors (low-note

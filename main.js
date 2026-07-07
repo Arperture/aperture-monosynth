@@ -3,13 +3,55 @@
 // AudioWorklet module loading and fetch() work without file:// restrictions,
 // and grants Web MIDI permission so a USB MIDI keyboard works out of the box.
 
-const { app, BrowserWindow, protocol, session, net, shell } = require('electron');
+const { app, BrowserWindow, Menu, protocol, session, net, shell } = require('electron');
 const path = require('path');
 const { pathToFileURL } = require('url');
 
 const APP_ROOT = path.join(__dirname, 'app');
 const WIN_W = 1500;
 const WIN_H = 1150;
+
+function sendMenu(action) {
+  const win = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+  if (win) win.webContents.send('menu', action);
+}
+
+function buildMenu() {
+  const template = [
+    {
+      label: 'Aperture',
+      submenu: [
+        { role: 'about', label: 'About Aperture' },
+        { type: 'separator' },
+        { label: 'Setup…', accelerator: 'CmdOrCtrl+,', click: () => sendMenu('setup') },
+        { type: 'separator' },
+        { role: 'hide' }, { role: 'hideOthers' }, { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' },
+      ],
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' }, { role: 'redo' }, { type: 'separator' },
+        { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' },
+      ],
+    },
+    {
+      label: 'View',
+      submenu: [
+        { label: 'Setup…', accelerator: 'CmdOrCtrl+,', click: () => sendMenu('setup') },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }, { role: 'reload' }, { role: 'toggleDevTools' },
+      ],
+    },
+    {
+      label: 'Window',
+      submenu: [{ role: 'minimize' }, { role: 'zoom' }, { role: 'close' }],
+    },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -30,11 +72,11 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      preload: path.join(__dirname, 'preload.js'),
     },
   });
 
   win.setAspectRatio(WIN_W / WIN_H);
-  win.setMenuBarVisibility(false);
 
   // External links (if any) open in the default browser, never in-app.
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -56,14 +98,15 @@ app.whenReady().then(() => {
     return net.fetch(pathToFileURL(file).toString());
   });
 
-  // Web MIDI needs both the request handler (permission prompts) and the
-  // check handler (synchronous permission queries) to say yes.
-  const allowMidi = (permission) => permission === 'midi' || permission === 'midiSysex';
+  // Grant Web MIDI (USB controllers) and media (so audio-output devices
+  // enumerate with labels for the Setup screen). Both handlers must agree.
+  const allow = (p) => p === 'midi' || p === 'midiSysex' || p === 'media' || p === 'speaker-selection';
   session.defaultSession.setPermissionRequestHandler((wc, permission, callback) => {
-    callback(allowMidi(permission));
+    callback(allow(permission));
   });
-  session.defaultSession.setPermissionCheckHandler((wc, permission) => allowMidi(permission));
+  session.defaultSession.setPermissionCheckHandler((wc, permission) => allow(permission));
 
+  buildMenu();
   createWindow();
 
   app.on('activate', () => {

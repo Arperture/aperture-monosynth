@@ -286,7 +286,7 @@ function buildCase(svg) {
   const br = (x, y, dx, dy) => {
     el('path', {
       d: `M${x + dx * 10} ${y} L${x} ${y} L${x} ${y + dy * 10}`,
-      stroke: C.gold, 'stroke-width': 1, fill: 'none', opacity: 0.7,
+      stroke: C.cyan, 'stroke-width': 1, fill: 'none', opacity: 0.55,
     }, svg);
   };
   br(28, 28, 1, 1);
@@ -298,7 +298,7 @@ function buildCase(svg) {
 // vector recreation of the aperture iris mark, noir monochrome
 function buildEmblem(svg, cx, cy, r) {
   const g = el('g', { opacity: 0.95 }, svg);
-  el('circle', { cx, cy, r, fill: 'none', stroke: C.gold, 'stroke-width': 1.6 }, g);
+  el('circle', { cx, cy, r, fill: 'none', stroke: C.cyan, 'stroke-width': 1.6 }, g);
   // 6 iris blades
   for (let i = 0; i < 6; i++) {
     const a0 = (i * 60 * Math.PI) / 180;
@@ -307,11 +307,11 @@ function buildEmblem(svg, cx, cy, r) {
     el('line', {
       x1: cx + Math.cos(a0) * r * 0.92, y1: cy + Math.sin(a0) * r * 0.92,
       x2: cx + Math.cos(a1) * inner, y2: cy + Math.sin(a1) * inner,
-      stroke: C.gold, 'stroke-width': 1.3,
+      stroke: C.cyan, 'stroke-width': 1.3,
     }, g);
   }
-  el('circle', { cx, cy, r: r * 0.42, fill: 'none', stroke: C.gold, 'stroke-width': 1 }, g);
-  el('circle', { cx, cy, r: 1.6, fill: C.gold }, g);
+  el('circle', { cx, cy, r: r * 0.42, fill: 'none', stroke: C.cyan, 'stroke-width': 1 }, g);
+  el('circle', { cx, cy, r: 1.6, fill: C.cyanBright }, g);
   return g;
 }
 
@@ -319,11 +319,6 @@ function buildBranding(svg) {
   // microtype, bottom-left of panel
   mono(svg, 44, 536, 'AP·1 — ANALOG MODELING SYNTHESIZER', 8, { anchor: 'start', fill: C.faint });
   mono(svg, 44, 550, 'EST. MMXXVI · ARPERTURE MEDIA', 7, { anchor: 'start', fill: '#45454B' });
-  // crosshair microdetail
-  const chx = 470, chy = 542;
-  el('line', { x1: chx - 10, y1: chy, x2: chx + 10, y2: chy, stroke: C.faint, 'stroke-width': 0.8 }, svg);
-  el('line', { x1: chx, y1: chy - 8, x2: chx, y2: chy + 8, stroke: C.faint, 'stroke-width': 0.8 }, svg);
-  el('circle', { cx: chx, cy: chy, r: 2, fill: C.gold }, svg);
 
   // MIDI LEARN button — arm, click a knob/slider, twist a controller knob
   const lb = el('g', { id: 'midi-learn-btn', 'data-widget': 'midilearn' }, svg);
@@ -338,9 +333,9 @@ function buildBranding(svg) {
   // wordmark, bottom-right of panel — emblem sits clear of the name
   buildEmblem(svg, 1364, 530, 17);
   txt(svg, 1636, 539, 'APERTURE', 30, {
-    font: FONT_DISPLAY, weight: 600, ls: 7, fill: C.gold, anchor: 'end',
+    font: FONT_DISPLAY, weight: 600, ls: 7, fill: C.cyan, anchor: 'end',
   });
-  el('line', { x1: 1417, y1: 549, x2: 1636, y2: 549, stroke: C.gold, 'stroke-width': 0.8, opacity: 0.6 }, svg);
+  el('line', { x1: 1417, y1: 549, x2: 1636, y2: 549, stroke: C.cyan, 'stroke-width': 0.8, opacity: 0.6 }, svg);
 }
 
 // ---- sections ------------------------------------------------------------------------------------
@@ -399,11 +394,9 @@ function buildSections(svg) {
     buildBtnGroup(svg, 'subOctave', cA + 20, 432, [
       { label: '-1', sub: 'OCT' }, { label: '-2', sub: 'OCT' },
     ], { label: 'RANGE', size: 26, pitch: 34 });
-    // fixed square voice badge
-    const bx = cC - 20;
-    el('rect', { x: bx - 22, y: 418, width: 44, height: 28, rx: 5, fill: 'none', stroke: C.line, 'stroke-width': 1 }, svg);
-    waveGlyph(svg, 'square', bx, 432, C.faint);
-    mono(svg, bx, 460, 'SQUARE', 6.5, { fill: C.faint });
+    buildBtnGroup(svg, 'subWave', cC - 20, 432, [
+      { glyph: 'square' }, { glyph: 'sine' },
+    ], { label: 'WAVE', size: 26, pitch: 33 });
   }
 
   // -- 4: MIXER

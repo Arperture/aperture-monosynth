@@ -10,6 +10,7 @@ import { MidiLearn } from './midi-learn.js';
 import { Qwerty } from './qwerty.js';
 import { Sequencer, BANK_SIZE, SEQ_BANKS, ensureSeqBanksInit } from './sequencer.js';
 import { StepMenu } from './step-menu.js';
+import { Setup } from './setup.js';
 import { promptName } from './modal.js';
 import {
   loadPanelState, savePanelState,
@@ -51,6 +52,8 @@ async function ensureEngine() {
   node.connect(analyser);
   node.connect(ctx.destination);
 
+  await applyAudioSink();
+
   node.port.onmessage = (e) => onEngineMessage(e.data);
 
   for (const [id, v] of Object.entries(state)) send({ t: 'p', id, v });
@@ -63,6 +66,25 @@ async function ensureEngine() {
 
 function send(msg) {
   if (node) node.port.postMessage(msg);
+}
+
+// ---- audio output device (setSinkId) --------------------------------------------
+
+let audioSinkId = localStorage.getItem('aperture.audioSink') || '';
+
+async function applyAudioSink() {
+  if (ctx && audioSinkId && typeof ctx.setSinkId === 'function') {
+    try { await ctx.setSinkId(audioSinkId); } catch { /* device gone; stay on default */ }
+  }
+}
+
+async function listAudioOutputs() {
+  if (!navigator.mediaDevices?.enumerateDevices) return [];
+  try {
+    const devs = await navigator.mediaDevices.enumerateDevices();
+    return devs.filter((d) => d.kind === 'audiooutput')
+      .map((d, i) => ({ id: d.deviceId, name: d.label || `Output ${i + 1}` }));
+  } catch { return []; }
 }
 
 // engine -> UI messages (sequencer playhead, applied p-locks, QA dumps)
@@ -240,7 +262,37 @@ initMidi({
   },
 }).then((midi) => {
   window.__apertureMidiInject = midi.inject;
+  midiCtl = midi;
 });
+
+// ---- setup screen (MIDI + audio device selection) --------------------------------
+
+let midiCtl = null;
+
+const setup = new Setup({
+  listMidiInputs: () => (midiCtl ? midiCtl.listInputs() : []),
+  getMidiInput: () => (midiCtl ? midiCtl.getSelected() : 'omni'),
+  setMidiInput: (id) => { if (midiCtl) midiCtl.setInput(id); },
+  listAudioOutputs,
+  getAudioOutput: () => audioSinkId,
+  setAudioOutput: async (id) => {
+    audioSinkId = id;
+    localStorage.setItem('aperture.audioSink', id);
+    await applyAudioSink();
+  },
+  audioInfo: () => ({
+    sampleRate: ctx ? ctx.sampleRate : null,
+    sinkSupported: typeof AudioContext.prototype.setSinkId === 'function',
+  }),
+});
+window.__apertureSetup = setup; // QA hook
+
+document.getElementById('setup-btn').addEventListener('click', () => setup.open());
+
+// Electron top menu bar → Setup… (bridged through preload)
+if (window.apertureHost?.onMenu) {
+  window.apertureHost.onMenu((action) => { if (action === 'setup') setup.open(); });
+}
 
 // ---- patch libraries (A/B/C/D, 128 named slots each) -----------------------------
 

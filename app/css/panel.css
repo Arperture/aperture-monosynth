@@ -256,6 +256,97 @@ html, body {
 #modal-ok { border-color: rgba(46, 204, 250, 0.4); color: var(--cyan-bright); }
 #modal-buttons button:hover { border-color: var(--cyan); }
 
+/* ---- setup screen ---- */
+
+#setup-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 8, 12, 0.66);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+  z-index: 45;
+}
+#setup-overlay.show { opacity: 1; pointer-events: auto; }
+
+#setup-panel {
+  min-width: 420px;
+  background: var(--ink-850);
+  border: 1px solid var(--cyan);
+  border-radius: 12px;
+  padding: 20px 22px 22px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.62), 0 0 26px rgba(46, 204, 250, 0.14);
+  transform: translateY(6px);
+  transition: transform 140ms ease;
+}
+#setup-overlay.show #setup-panel { transform: translateY(0); }
+
+.setup-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.setup-title {
+  font-family: 'Clash Display', 'Hanken Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: 0.14em;
+  color: var(--cyan);
+}
+#setup-close {
+  font: 400 15px/1 'Space Mono', monospace;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  outline: none;
+}
+#setup-close:hover { border-color: var(--cyan); color: var(--cyan-bright); }
+
+.setup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.setup-row label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+  min-width: 108px;
+}
+.setup-row select {
+  flex: 1;
+  font: 400 13px/1 'Hanken Grotesk', sans-serif;
+  color: var(--ink-50, #F4F4F6);
+  background: var(--ink-950);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  outline: none;
+  cursor: pointer;
+}
+.setup-row select:focus { border-color: var(--cyan); }
+.setup-row select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.setup-note {
+  margin-top: 6px;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  color: #5D6673;
+}
+
 /* ---- step context menu ---- */
 
 #step-menu {

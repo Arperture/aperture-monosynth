@@ -407,7 +407,7 @@ class ApertureProcessor extends AudioWorkletProcessor {
       osc2Mod: 0,
       osc1Octave: 1, sync: 0, osc1Wave: 0,
       osc2Octave: 1, osc2Interval: 0.5, osc2Wave: 0,
-      subOctave: 0,
+      subOctave: 0, subWave: 0,
       mixOsc1: 0.8, mixOsc2: 0.8, mixSub: 0,
       filterMod: 0, masterVolume: 0.75, kbdTracking: 2,
       contourAmount: 0.35, cutoff: 0.7, emphasis: 0.25, velTrack: 0,
@@ -420,7 +420,7 @@ class ApertureProcessor extends AudioWorkletProcessor {
     this.s = { ...this.p };
     this.INSTANT = new Set([
       'oscMod', 'osc2Mod', 'modShape', 'osc1Octave', 'sync', 'osc1Wave', 'osc2Octave',
-      'osc2Wave', 'subOctave', 'filterMod', 'kbdTracking', 'velTrack',
+      'osc2Wave', 'subOctave', 'subWave', 'filterMod', 'kbdTracking', 'velTrack',
       'modFxOn', 'modFxType', 'dlyOn', 'dlySync', 'dlyType', 'revOn', 'revType',
     ]);
 
@@ -754,7 +754,9 @@ class ApertureProcessor extends AudioWorkletProcessor {
         const s1 = this.osc1.step(null);
         const syncFrac = (this.p.sync >= 1 && this.osc1.wrapped) ? this.osc1.wrapFrac : null;
         const s2 = this.osc2.step(syncFrac);
-        const sSub = this.sub.step(null);
+        // sub oscillator: square (BLEP) or clean sine, selected by subWave
+        let sSub = this.sub.step(null);
+        if (this.s.subWave >= 1) sSub = Math.sin(TWO_PI * this.sub.t);
 
         this.envF.step();
         const lEnv = this.envL.step();

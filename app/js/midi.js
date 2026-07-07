@@ -1,9 +1,13 @@
-// Web MIDI input: auto-connects every input, hot-plugs on statechange.
-// Notes -> engine, pitch bend -> pitch wheel, CC1 -> mod wheel (reserved),
-// all other CCs are handed over raw — main.js resolves them through the
-// MIDI-learn map layered over the factory chart. MIDI realtime bytes drive
-// the sequencer transport (0xFA start / 0xFB continue / 0xFC stop).
-// Velocity feeds sequencer recording. Omni: all channels accepted.
+// Web MIDI input. Notes -> engine, pitch bend -> pitch wheel, CC1 -> mod wheel
+// (reserved), all other CCs handed over raw (resolved via the learn map),
+// realtime bytes drive the sequencer transport (0xFA/0xFB/0xFC). Velocity
+// feeds sequencer recording.
+//
+// Device selection: the Setup screen can pick a specific Core MIDI input or
+// "Omni" (all inputs). The choice persists in localStorage and re-applies on
+// hot-plug (statechange).
+
+const LS_INPUT = 'aperture.midiInput';
 
 export async function initMidi({
   onNoteOn, onNoteOff, onPitchBend, onModWheel, onCC, onTransport, onStatus,
@@ -30,9 +34,16 @@ export async function initMidi({
     }
   };
 
+  const stub = {
+    inject: route,
+    listInputs: () => [],
+    getSelected: () => 'omni',
+    setInput: () => {},
+  };
+
   if (!navigator.requestMIDIAccess) {
     onStatus(false, 'Web MIDI unavailable');
-    return { inject: route };
+    return stub;
   }
 
   let access;
@@ -40,21 +51,38 @@ export async function initMidi({
     access = await navigator.requestMIDIAccess({ sysex: false });
   } catch {
     onStatus(false, 'MIDI access denied');
-    return { inject: route };
+    return stub;
   }
 
-  const wire = () => {
-    const names = [];
+  let selected = localStorage.getItem(LS_INPUT) || 'omni';
+
+  const apply = () => {
+    const active = [];
     for (const input of access.inputs.values()) {
-      names.push(input.name || 'MIDI input');
-      input.onmidimessage = (e) => route(e.data);
+      const on = selected === 'omni' || input.id === selected;
+      input.onmidimessage = on ? (e) => route(e.data) : null;
+      if (on) active.push(input.name || 'MIDI input');
     }
-    if (names.length) onStatus(true, names.join(' · '));
-    else onStatus(false, 'no MIDI device');
+    if (selected === 'omni') {
+      onStatus(active.length > 0,
+        active.length ? `Omni · ${active.length} device${active.length > 1 ? 's' : ''}` : 'no MIDI device');
+    } else {
+      const inp = [...access.inputs.values()].find((i) => i.id === selected);
+      onStatus(!!inp, inp ? (inp.name || 'MIDI input') : 'device unavailable');
+    }
   };
 
-  access.onstatechange = wire;
-  wire();
+  access.onstatechange = apply;
+  apply();
 
-  return { inject: route };
+  return {
+    inject: route,
+    listInputs: () => [...access.inputs.values()].map((i) => ({ id: i.id, name: i.name || 'MIDI input' })),
+    getSelected: () => selected,
+    setInput: (id) => {
+      selected = id || 'omni';
+      localStorage.setItem(LS_INPUT, selected);
+      apply();
+    },
+  };
 }

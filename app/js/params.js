@@ -28,6 +28,7 @@ export const PARAMS = [
   { id: 'osc2Interval',  type: 'knob',   def: 0.5, bipolar: true, detent: true, cc: 77 },
   { id: 'osc2Wave',      type: 'switch', def: 0, positions: 3, cc: 105 }, // saw tri square
   { id: 'subOctave',     type: 'switch', def: 0, positions: 2, cc: 112 }, // -1 / -2 oct
+  { id: 'subWave',       type: 'switch', def: 0, positions: 2, cc: 81 },  // square / sine
 
   // -- MIXER --------------------------------------------------------------------
   { id: 'mixOsc1',       type: 'knob',   def: 0.8,  cc: 20 },
