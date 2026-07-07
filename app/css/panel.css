@@ -143,3 +143,34 @@ html, body {
 #unit [data-widget="knob"],
 #unit [data-widget="wheel"],
 #unit [data-widget="slider"] { cursor: ns-resize; }
+
+/* ---- MIDI learn ---- */
+
+#unit.learn-mode [data-widget="knob"],
+#unit.learn-mode [data-widget="slider"] { cursor: crosshair; }
+
+.learn-target { animation: learnPulse 0.9s ease-in-out infinite; }
+@keyframes learnPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+#learn-popup {
+  position: fixed;
+  transform: translate(-50%, -100%);
+  background: var(--ink-850);
+  border: 1px solid var(--cyan);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--cyan-bright);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55), 0 0 14px rgba(46, 204, 250, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+  z-index: 20;
+  white-space: nowrap;
+}
+#learn-popup.show { opacity: 1; }

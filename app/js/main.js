@@ -6,6 +6,7 @@ import { buildUnit, VIEW_W, VIEW_H } from './panel.js';
 import { PanelUI } from './widgets.js';
 import { PARAM_BY_ID, defaultState } from './params.js';
 import { initMidi } from './midi.js';
+import { MidiLearn } from './midi-learn.js';
 import { Qwerty } from './qwerty.js';
 import { Sequencer } from './sequencer.js';
 import {
@@ -130,7 +131,12 @@ const ui = new PanelUI(svg, {
   onBarClick(bar) { seq.barClicked(bar); },
   onPlay() { powerOnIfNeeded(); seq.togglePlay(); },
   onRec() { seq.toggleRec(); },
+  onMidiLearn() { learn.toggle(); },
+  onLearnPick(id, shift) { learn.pick(id, shift); },
 });
+
+const learn = new MidiLearn(ui);
+window.__apertureLearn = learn; // QA hook
 
 // ---- sequencer ------------------------------------------------------------------
 
@@ -176,7 +182,10 @@ const qwerty = new Qwerty({
 });
 octaveLabel.textContent = qwerty.label();
 
-function handleCC(param, v127) {
+function handleCC(cc, v127) {
+  if (learn.onCC(cc)) return;          // consumed while MIDI learn is armed
+  const param = learn.resolve(cc);     // custom assignments layered over defaults
+  if (!param) return;
   if (param.type === 'knob' || param.type === 'slider') {
     let v = v127 / 127;
     if (param.detent && Math.abs(v - 0.5) < 0.02) v = 0.5;

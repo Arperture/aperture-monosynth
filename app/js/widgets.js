@@ -21,8 +21,37 @@ export class PanelUI {
     this.powerOn = false;
     this.mouseNote = null;
     this.drag = null;
+    this.learnMode = false;
+    this.learnTargetEl = null;
 
     this.bind();
+  }
+
+  // ---- MIDI learn visuals ---------------------------------------------
+
+  setLearnMode(on) {
+    this.learnMode = on;
+    this.svg.classList.toggle('learn-mode', on);
+  }
+
+  setLearnTarget(id) {
+    if (this.learnTargetEl) this.learnTargetEl.classList.remove('learn-target');
+    this.learnTargetEl = id ? this.svg.querySelector(
+      `[data-widget="knob"][data-param="${id}"],[data-widget="slider"][data-param="${id}"]`,
+    ) : null;
+    if (this.learnTargetEl) this.learnTargetEl.classList.add('learn-target');
+  }
+
+  paintMidiLearn(on) {
+    const g = this.svg.querySelector('#midi-learn-btn');
+    if (!g) return;
+    const face = g.querySelector('[data-face]');
+    const dot = g.querySelector('[data-dot]');
+    face.setAttribute('fill', on ? '#2E1B1C' : C.surface);
+    face.setAttribute('stroke', on ? C.coral : C.btnStroke);
+    dot.setAttribute('fill', on ? C.coral : C.ledOff);
+    if (on) dot.setAttribute('filter', 'url(#glow)');
+    else dot.removeAttribute('filter');
   }
 
   // ---- knobs (LED ring) --------------------------------------------------
@@ -276,17 +305,22 @@ export class PanelUI {
         return;
       case 'knob': {
         const id = t.dataset.param;
+        if (this.learnMode) { this.h.onLearnPick(id, e.shiftKey); return; }
         this.drag = { kind: 'knob', id, startY: e.clientY, startV: this.values[id] ?? 0 };
         return;
       }
       case 'slider': {
         const id = t.dataset.param;
+        if (this.learnMode) { this.h.onLearnPick(id, e.shiftKey); return; }
         this.drag = {
           kind: 'slider', id, startY: e.clientY,
           startV: this.values[id] ?? 0, h: +t.dataset.h,
         };
         return;
       }
+      case 'midilearn':
+        this.h.onMidiLearn();
+        return;
       case 'wheel': {
         const id = t.dataset.param;
         this.drag = { kind: 'wheel', id, startY: e.clientY, startV: this.wheels[id] ?? 0 };

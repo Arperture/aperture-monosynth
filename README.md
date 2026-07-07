@@ -61,9 +61,27 @@ motion locks) · unlit = rest · coral outline = record cursor.**
   stays velocity-insensitive — heritage behavior; mouse/computer keys record 0.8).
 - PLAY/REC, TEMPO knob (40–240) + BPM readout. The pattern and tempo persist.
 
+## MIDI Learn
+
+Every knob and slider can be re-assigned to any controller knob:
+
+1. Click **MIDI LEARN** on the panel (bottom strip — it arms coral).
+2. Click the knob or slider you want to map (it pulses).
+3. Twist a knob on your MIDI controller — the assignment locks in and a
+   popup shows the CC number.
+4. Map as many controls as you like, then click MIDI LEARN again (or press
+   `Esc`) to exit.
+
+**Shift-click** a control while armed to reset it to its factory CC.
+Assigning a CC that's already in use steals it; the previous owner falls
+back to its default. Assignments persist between launches. CC 1 stays
+reserved for the mod wheel, CC 120/123 for all-notes-off. Buttons and
+switches keep their factory CCs (chart below) — they aren't learnable.
+
 ## MIDI implementation chart
 
-Omni. Knobs/sliders take 0–127; switches split the range per position.
+Factory defaults (omni; MIDI Learn overrides take precedence for knobs and
+sliders). Knobs/sliders take 0–127; switches split the range per position.
 
 | CC | Control | CC | Control |
 |----|---------|----|---------|

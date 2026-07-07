@@ -1,10 +1,9 @@
 // Web MIDI input: auto-connects every input, hot-plugs on statechange.
-// Notes -> engine, pitch bend -> pitch wheel, CC1 -> mod wheel, every panel
-// control answers to a CC (map in params.js / README chart), and MIDI
-// realtime bytes drive the sequencer transport (0xFA start / 0xFB continue /
-// 0xFC stop). Velocity ignored (heritage). Omni: all channels accepted.
-
-import { CC_TO_PARAM } from './params.js';
+// Notes -> engine, pitch bend -> pitch wheel, CC1 -> mod wheel (reserved),
+// all other CCs are handed over raw — main.js resolves them through the
+// MIDI-learn map layered over the factory chart. MIDI realtime bytes drive
+// the sequencer transport (0xFA start / 0xFB continue / 0xFC stop).
+// Velocity feeds sequencer recording. Omni: all channels accepted.
 
 export async function initMidi({
   onNoteOn, onNoteOff, onPitchBend, onModWheel, onCC, onTransport, onStatus,
@@ -27,8 +26,7 @@ export async function initMidi({
     } else if (type === 0xb0) {
       if (d1 === 1) { onModWheel(d2 / 127); return; }
       if (d1 === 120 || d1 === 123) { onNoteOff(-1); return; }
-      const param = CC_TO_PARAM[d1];
-      if (param) onCC(param, d2);
+      onCC(d1, d2); // raw controller number; resolved via the learn map
     }
   };
 

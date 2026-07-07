@@ -325,6 +325,16 @@ function buildBranding(svg) {
   el('line', { x1: chx, y1: chy - 8, x2: chx, y2: chy + 8, stroke: C.faint, 'stroke-width': 0.8 }, svg);
   el('circle', { cx: chx, cy: chy, r: 2, fill: C.gold }, svg);
 
+  // MIDI LEARN button — arm, click a knob/slider, twist a controller knob
+  const lb = el('g', { id: 'midi-learn-btn', 'data-widget': 'midilearn' }, svg);
+  el('rect', {
+    'data-face': 1, x: 560, y: 519, width: 22, height: 22, rx: 5,
+    fill: C.surface, stroke: C.btnStroke, 'stroke-width': 0.9,
+  }, lb);
+  el('circle', { 'data-dot': 1, cx: 571, cy: 530, r: 3.2, fill: C.ledOff }, lb);
+  mono(lb, 592, 533.5, 'MIDI LEARN', 7.5, { anchor: 'start', fill: C.faint });
+  el('rect', { x: 556, y: 514, width: 118, height: 32, fill: 'transparent' }, lb);
+
   // wordmark, bottom-right of panel — emblem sits clear of the name
   buildEmblem(svg, 1364, 530, 17);
   txt(svg, 1636, 539, 'APERTURE', 30, {
