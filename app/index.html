@@ -15,21 +15,25 @@
       <!-- Preset / status strip (not part of the panel artwork) -->
       <div id="strip">
         <div class="strip-group">
-          <select id="preset-select" title="Preset"></select>
-          <button id="preset-save" title="Overwrite the selected user preset">Save</button>
-          <button id="preset-saveas" title="Save current panel as a new preset">Save As</button>
-          <button id="preset-delete" title="Delete the selected user preset">Delete</button>
-          <button id="preset-init" title="Reset panel to the init patch">Init</button>
+          <span class="strip-label">PATCH</span>
+          <select id="patch-lib" class="lib-sel" title="Patch library"></select>
+          <select id="patch-slot" title="Patch slot (128 per library)"></select>
+          <button id="patch-save" title="Name and save the current patch to this slot">Save</button>
+          <button id="patch-load" title="Load the patch in this slot">Load</button>
+          <button id="patch-clear" title="Clear this patch slot">Clear</button>
+          <button id="patch-init" title="Reset panel to the init patch">Init</button>
         </div>
         <div class="strip-group" id="seq-bank">
           <span class="strip-label">SEQ</span>
+          <select id="seq-banksel" class="lib-sel" title="Sequence bank"></select>
           <select id="seq-slot" title="Sequence slot (128 per bank)"></select>
-          <button id="seq-save" title="Save the current sequence to this slot">Save</button>
+          <button id="seq-save" title="Name and save the current sequence to this slot">Save</button>
           <button id="seq-load" title="Load the sequence in this slot">Load</button>
-          <button id="seq-init" title="Clear all sequencer data (click twice)">Init</button>
+          <button id="seq-clear" title="Clear this sequence slot">Clear</button>
+          <button id="seq-init" title="Clear the working sequence (click twice)">Init</button>
         </div>
         <div class="strip-group strip-right">
-          <span id="kbd-hint">keys A–' play &nbsp;·&nbsp; Z/X octave <b id="octave-label">C2</b></span>
+          <span id="kbd-hint">A–' play &nbsp;·&nbsp; Z/X oct <b id="octave-label">C2</b></span>
           <span id="midi-status"><i id="midi-led"></i><span id="midi-name">no MIDI device</span></span>
         </div>
       </div>

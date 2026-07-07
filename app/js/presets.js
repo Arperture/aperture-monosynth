@@ -107,3 +107,55 @@ export function loadPanelState() {
 export function savePanelState(state) {
   localStorage.setItem(LS_STATE, JSON.stringify(state));
 }
+
+// ---- patch libraries A/B/C/D (128 named slots each) --------------------------
+// Each slot is null or { name, state }. Stored one localStorage key per library.
+
+export const LIBS = ['A', 'B', 'C', 'D'];
+export const LIB_SIZE = 128;
+const LS_LIB = (lib) => `aperture.patchLib.${lib}`;
+const LS_LIB_INIT = 'aperture.patchLib.init';
+
+export function loadPatchLib(lib) {
+  try {
+    const arr = JSON.parse(localStorage.getItem(LS_LIB(lib)));
+    if (Array.isArray(arr) && arr.length === LIB_SIZE) return arr;
+  } catch { /* fresh library */ }
+  return Array.from({ length: LIB_SIZE }, () => null);
+}
+
+export function savePatchLib(lib, arr) {
+  localStorage.setItem(LS_LIB(lib), JSON.stringify(arr));
+}
+
+export function savePatchSlot(lib, n, name, state) {
+  const arr = loadPatchLib(lib);
+  arr[n] = { name, state: { ...state } };
+  savePatchLib(lib, arr);
+}
+
+export function clearPatchSlot(lib, n) {
+  const arr = loadPatchLib(lib);
+  arr[n] = null;
+  savePatchLib(lib, arr);
+}
+
+// One-time seeding: Library A gets the factory patches, then any presets saved
+// under the old flat-list format are migrated into the following empty slots.
+export function ensurePatchLibsInit() {
+  if (localStorage.getItem(LS_LIB_INIT)) return;
+  const a = loadPatchLib('A');
+  let n = 0;
+  for (const p of FACTORY) {
+    if (n >= LIB_SIZE) break;
+    a[n++] = { name: p.name, state: { ...p.state } };
+  }
+  let legacy = [];
+  try { legacy = JSON.parse(localStorage.getItem(LS_PRESETS)) || []; } catch { /* none */ }
+  for (const p of legacy) {
+    if (n >= LIB_SIZE) break;
+    a[n++] = { name: p.name, state: { ...p.state } };
+  }
+  savePatchLib('A', a);
+  localStorage.setItem(LS_LIB_INIT, '1');
+}

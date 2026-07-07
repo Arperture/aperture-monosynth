@@ -72,10 +72,23 @@ motion locks) · unlit = rest · coral outline = record cursor.**
 - **STEPS 16/32** selector by the transport switches the pattern length
   (bar 2 dims in 16-step mode).
 - PLAY/REC, TEMPO knob (40–240) + BPM readout. The working pattern and tempo persist.
-- **Sequence bank**: 128 slots in the bottom strip — pick a slot, **Save** /
-  **Load** (a ● marks filled slots). Saved sequences carry their steps, ties,
+
+## Saving — patch libraries & sequence banks
+
+Both live in the bottom strip and work the same way:
+
+- **PATCH** — four libraries **A / B / C / D**, 128 named slots each (512 patches).
+  Library A ships pre-loaded with the factory patches. Pick a library + slot,
+  then **Save** (a dialog pops up to name it), **Load**, or **Clear**. **Init**
+  resets the panel to the blank patch.
+- **SEQ** — four banks **A / B / C / D**, 128 named slots each (512 sequences).
+  Same Save (named) / Load / Clear. A saved sequence carries its steps, ties,
   velocities, locks/snapshots, tempo, and length. **Init** (click twice)
   clears the working sequence.
+
+Saving opens a small naming dialog (Enter to confirm, Esc to cancel). Filled
+slots show their name in the dropdown; empty ones read "· empty". Patches and
+sequences are independent, so any sequence can play under any patch.
 
 ## MIDI Learn
 

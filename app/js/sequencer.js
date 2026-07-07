@@ -20,10 +20,25 @@
 //   · bar LEDs            -> click to view bar 1/2; view auto-follows while playing
 
 const LS_KEY = 'aperture.sequence';
-const LS_BANK = 'aperture.seqBank';
+const LS_BANK = (bank) => `aperture.seqBank.${bank}`;
+const LS_BANK_INIT = 'aperture.seqBank.init';
 export const BANK_SIZE = 128;
+export const SEQ_BANKS = ['A', 'B', 'C', 'D'];
 const DEFAULT_NOTE = 45; // A2
 const DEFAULT_VEL = 0.8;
+
+// One-time migration: the old flat 'aperture.seqBank' array becomes bank A.
+export function ensureSeqBanksInit() {
+  if (localStorage.getItem(LS_BANK_INIT)) return;
+  try {
+    const old = JSON.parse(localStorage.getItem('aperture.seqBank'));
+    if (Array.isArray(old) && old.length === BANK_SIZE) {
+      const migrated = old.map((s, i) => (s ? { name: `Seq ${String(i + 1).padStart(3, '0')}`, ...s } : null));
+      localStorage.setItem(LS_BANK('A'), JSON.stringify(migrated));
+    }
+  } catch { /* nothing to migrate */ }
+  localStorage.setItem(LS_BANK_INIT, '1');
+}
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 export const midiToName = (n) => `${NOTE_NAMES[n % 12]}${Math.floor(n / 12) - 1}`;
@@ -235,23 +250,28 @@ export class Sequencer {
     this.saveSoon();
   }
 
-  loadBank() {
+  loadBank(bank) {
     try {
-      const b = JSON.parse(localStorage.getItem(LS_BANK));
+      const b = JSON.parse(localStorage.getItem(LS_BANK(bank)));
       if (Array.isArray(b) && b.length === BANK_SIZE) return b;
     } catch { /* fresh bank */ }
     return Array.from({ length: BANK_SIZE }, () => null);
   }
 
-  saveSlot(n) {
-    const bank = this.loadBank();
-    bank[n] = { steps: this.steps, bpm: this.bpm, len: this.len };
-    localStorage.setItem(LS_BANK, JSON.stringify(bank));
+  saveSlot(bank, n, name) {
+    const arr = this.loadBank(bank);
+    arr[n] = { name, steps: this.steps, bpm: this.bpm, len: this.len };
+    localStorage.setItem(LS_BANK(bank), JSON.stringify(arr));
   }
 
-  loadSlot(n) {
-    const bank = this.loadBank();
-    const d = bank[n];
+  clearSlot(bank, n) {
+    const arr = this.loadBank(bank);
+    arr[n] = null;
+    localStorage.setItem(LS_BANK(bank), JSON.stringify(arr));
+  }
+
+  loadSlot(bank, n) {
+    const d = this.loadBank(bank)[n];
     if (!d) return false;
     this.steps = d.steps.map((s) => ({ ...this.blankStep(), ...s }));
     this.bpm = d.bpm || 120;

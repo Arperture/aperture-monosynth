@@ -8,10 +8,12 @@ import { PARAM_BY_ID, defaultState } from './params.js';
 import { initMidi } from './midi.js';
 import { MidiLearn } from './midi-learn.js';
 import { Qwerty } from './qwerty.js';
-import { Sequencer, BANK_SIZE } from './sequencer.js';
+import { Sequencer, BANK_SIZE, SEQ_BANKS, ensureSeqBanksInit } from './sequencer.js';
 import { StepMenu } from './step-menu.js';
+import { promptName } from './modal.js';
 import {
-  FACTORY, loadUserPresets, saveUserPresets, loadPanelState, savePanelState,
+  loadPanelState, savePanelState,
+  LIBS, LIB_SIZE, loadPatchLib, savePatchSlot, clearPatchSlot, ensurePatchLibsInit,
 } from './presets.js';
 
 const svg = document.getElementById('unit');
@@ -240,35 +242,39 @@ initMidi({
   window.__apertureMidiInject = midi.inject;
 });
 
-// ---- presets --------------------------------------------------------------------
+// ---- patch libraries (A/B/C/D, 128 named slots each) -----------------------------
 
-const sel = document.getElementById('preset-select');
+ensurePatchLibsInit();
 
-function refreshPresetList(selectName) {
-  const user = loadUserPresets();
-  sel.innerHTML = '';
-  const gF = document.createElement('optgroup');
-  gF.label = 'Factory';
-  for (const p of FACTORY) {
-    const o = document.createElement('option');
-    o.value = `f:${p.name}`;
-    o.textContent = p.name;
-    gF.appendChild(o);
-  }
-  sel.appendChild(gF);
-  if (user.length) {
-    const gU = document.createElement('optgroup');
-    gU.label = 'User';
-    for (const p of user) {
-      const o = document.createElement('option');
-      o.value = `u:${p.name}`;
-      o.textContent = p.name;
-      gU.appendChild(o);
-    }
-    sel.appendChild(gU);
-  }
-  if (selectName) sel.value = selectName;
+const patchLibSel = document.getElementById('patch-lib');
+const patchSlotSel = document.getElementById('patch-slot');
+
+for (const lib of LIBS) {
+  const o = document.createElement('option');
+  o.value = lib;
+  o.textContent = lib;
+  patchLibSel.appendChild(o);
 }
+
+function slotLabel(i, entry) {
+  const n = String(i + 1).padStart(3, '0');
+  return entry ? `${n} · ${entry.name}` : `${n} · empty`;
+}
+
+function refreshPatchSlots(keep) {
+  const arr = loadPatchLib(patchLibSel.value);
+  const cur = keep ?? patchSlotSel.value ?? '0';
+  patchSlotSel.innerHTML = '';
+  for (let i = 0; i < LIB_SIZE; i++) {
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = slotLabel(i, arr[i]);
+    patchSlotSel.appendChild(o);
+  }
+  patchSlotSel.value = cur;
+}
+
+patchLibSel.addEventListener('change', () => refreshPatchSlots('0'));
 
 function applyPatch(patch) {
   state = { ...defaultState(), ...patch };
@@ -276,82 +282,87 @@ function applyPatch(patch) {
   persistSoon();
 }
 
-sel.addEventListener('change', () => {
-  const v = sel.value;
-  if (v.startsWith('f:')) {
-    const p = FACTORY.find((x) => x.name === v.slice(2));
-    if (p) applyPatch(p.state);
-  } else if (v.startsWith('u:')) {
-    const p = loadUserPresets().find((x) => x.name === v.slice(2));
-    if (p) applyPatch(p.state);
-  }
-});
-
-document.getElementById('preset-init').addEventListener('click', () => {
-  applyPatch(defaultState());
-  refreshPresetList('f:Init');
-});
-
-document.getElementById('preset-saveas').addEventListener('click', () => {
-  const name = prompt('Preset name:');
+document.getElementById('patch-save').addEventListener('click', async () => {
+  const lib = patchLibSel.value;
+  const n = +patchSlotSel.value;
+  const existing = loadPatchLib(lib)[n];
+  const name = await promptName({
+    title: `SAVE PATCH → LIBRARY ${lib} · ${String(n + 1).padStart(3, '0')}`,
+    value: existing ? existing.name : '',
+  });
   if (!name) return;
-  const user = loadUserPresets().filter((p) => p.name !== name);
-  user.push({ name, state: { ...state } });
-  saveUserPresets(user);
-  refreshPresetList(`u:${name}`);
+  savePatchSlot(lib, n, name, state);
+  refreshPatchSlots(String(n));
 });
 
-document.getElementById('preset-save').addEventListener('click', () => {
-  const v = sel.value;
-  if (!v.startsWith('u:')) {
-    alert('Select a user preset to overwrite, or use Save As.');
-    return;
-  }
-  const user = loadUserPresets();
-  const p = user.find((x) => x.name === v.slice(2));
-  if (p) {
-    p.state = { ...state };
-    saveUserPresets(user);
-  }
+document.getElementById('patch-load').addEventListener('click', () => {
+  const slot = loadPatchLib(patchLibSel.value)[+patchSlotSel.value];
+  if (slot) applyPatch(slot.state);
 });
 
-document.getElementById('preset-delete').addEventListener('click', () => {
-  const v = sel.value;
-  if (!v.startsWith('u:')) return;
-  saveUserPresets(loadUserPresets().filter((p) => p.name !== v.slice(2)));
-  refreshPresetList('f:Init');
+document.getElementById('patch-clear').addEventListener('click', () => {
+  clearPatchSlot(patchLibSel.value, +patchSlotSel.value);
+  refreshPatchSlots();
 });
 
-refreshPresetList('f:Init');
+document.getElementById('patch-init').addEventListener('click', () => {
+  applyPatch(defaultState());
+});
 
-// ---- sequence bank (128 slots) -----------------------------------------------------
+refreshPatchSlots('0');
 
+// ---- sequence banks (A/B/C/D, 128 named slots each) -------------------------------
+
+ensureSeqBanksInit();
+
+const seqBankSel = document.getElementById('seq-banksel');
 const slotSel = document.getElementById('seq-slot');
 
-function refreshSlotList(keep) {
-  const bank = seq.loadBank();
+for (const bank of SEQ_BANKS) {
+  const o = document.createElement('option');
+  o.value = bank;
+  o.textContent = bank;
+  seqBankSel.appendChild(o);
+}
+
+function refreshSeqSlots(keep) {
+  const arr = seq.loadBank(seqBankSel.value);
   const cur = keep ?? slotSel.value ?? '0';
   slotSel.innerHTML = '';
   for (let i = 0; i < BANK_SIZE; i++) {
     const o = document.createElement('option');
     o.value = i;
-    const n = String(i + 1).padStart(3, '0');
-    o.textContent = bank[i] ? `${n} ●` : `${n} · empty`;
+    o.textContent = slotLabel(i, arr[i]);
     slotSel.appendChild(o);
   }
   slotSel.value = cur;
 }
 
-document.getElementById('seq-save').addEventListener('click', () => {
-  seq.saveSlot(+slotSel.value);
-  refreshSlotList();
+seqBankSel.addEventListener('change', () => refreshSeqSlots('0'));
+
+document.getElementById('seq-save').addEventListener('click', async () => {
+  const bank = seqBankSel.value;
+  const n = +slotSel.value;
+  const existing = seq.loadBank(bank)[n];
+  const name = await promptName({
+    title: `SAVE SEQUENCE → BANK ${bank} · ${String(n + 1).padStart(3, '0')}`,
+    value: existing ? existing.name : '',
+  });
+  if (!name) return;
+  seq.saveSlot(bank, n, name);
+  refreshSeqSlots(String(n));
 });
 
 document.getElementById('seq-load').addEventListener('click', () => {
-  seq.loadSlot(+slotSel.value);
+  seq.loadSlot(seqBankSel.value, +slotSel.value);
 });
 
-// INIT clears everything — two clicks within 2 s to confirm
+document.getElementById('seq-clear').addEventListener('click', () => {
+  seq.clearSlot(seqBankSel.value, +slotSel.value);
+  refreshSeqSlots();
+});
+
+// INIT clears the working sequence — two clicks within 2 s to confirm
 const seqInitBtn = document.getElementById('seq-init');
 let initArmTimer = null;
 seqInitBtn.addEventListener('click', () => {
@@ -370,7 +381,7 @@ seqInitBtn.addEventListener('click', () => {
   }
 });
 
-refreshSlotList('0');
+refreshSeqSlots('0');
 
 // ---- window scaling ---------------------------------------------------------------
 
