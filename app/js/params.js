@@ -41,6 +41,7 @@ export const PARAMS = [
   { id: 'cutoff',        type: 'knob',   def: 0.7,  cc: 74 },
   { id: 'emphasis',      type: 'knob',   def: 0.25, cc: 71 },
   { id: 'contourAmount', type: 'knob',   def: 0.35, cc: 22 },
+  { id: 'velTrack',      type: 'switch', def: 0, positions: 2, cc: 80 }, // velocity -> cutoff
 
   // -- FILTER CONTOUR (ADSR sliders) --------------------------------------------------
   { id: 'fAttack',       type: 'slider', def: 0.05, cc: 23 },

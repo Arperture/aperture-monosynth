@@ -36,6 +36,10 @@ Click the POWER LED on the performance plate (or just play) to start audio.
   with SYNC on, LFO-driven sync sweeps).
 - **SUB OSCILLATOR** — square, tracks OSC 1, RANGE −1 or −2 octaves; own MIXER level.
 - **CONTOURS** — real ADSR on vertical sliders (1 ms – 10 s log ranges).
+- **VEL→CUTOFF** (FILTER section) — note velocity tracks the filter: full-force
+  strikes open to the CUTOFF knob setting, soft strikes close it by up to
+  ~3.5 octaves. Applies to live MIDI playing and to sequencer step velocities
+  (loudness stays velocity-insensitive either way — heritage).
 - **EFFECTS** — MOD (chorus / flanger / phaser), DELAY (stereo / ping-pong / tape,
   **SYNC** locks TIME to musical divisions of the sequencer tempo: 16th → half
   note across the knob), REVERB (plate / hall). Each: type buttons, TIME + DEPTH, ON.
@@ -113,7 +117,7 @@ sliders). Knobs/sliders take 0–127; switches split the range per position.
 | 111| Osc 2 Mod | 119 | Delay Sync |
 | 107| Oscillator Mod | 109 | Mod Shape (4-pos) |
 | 108| Filter Mod | 110 | Kbd Tracking |
-| 112| Sub Octave | | |
+| 112| Sub Octave | 80 | Vel→Cutoff on/off |
 
 Voicing and FX constants are grouped under `TUNE BY EAR` at the top of
 `app/audio/aperture-processor.js`. The heritage voice behaviors (low-note

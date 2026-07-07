@@ -113,7 +113,7 @@ const ui = new PanelUI(svg, {
   },
   onNoteOn(note, vel = 0.8) {
     powerOnIfNeeded();
-    send({ t: 'on', n: note });
+    send({ t: 'on', n: note, v: vel }); // velocity steers VEL→CUTOFF when enabled
     ui.setKeyLit(note, true);
     seq.noteInput(note, vel);   // records note + velocity when REC is armed
   },

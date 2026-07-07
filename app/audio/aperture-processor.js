@@ -16,6 +16,8 @@ const OSC_MOD_DEPTH_ST = 4;
 const FILTER_MOD_OCT = 3;
 const CONTOUR_OCT = 5.5;
 const GROWL_OCT = 2.5;            // sub->cutoff FM span at full MOD AMOUNT
+const VEL_TRACK_OCT = 3.5;        // velocity->cutoff span: full velocity = knob setting,
+                                  // soft strikes close the filter by up to this many octaves
 const GLIDE_MIN_S_PER_OCT = 0.008;
 const GLIDE_MAX_S_PER_OCT = 2.5;
 const LFO_MIN_HZ = 0.3, LFO_MAX_HZ = 30;
@@ -408,7 +410,7 @@ class ApertureProcessor extends AudioWorkletProcessor {
       subOctave: 0,
       mixOsc1: 0.8, mixOsc2: 0.8, mixSub: 0,
       filterMod: 0, masterVolume: 0.75, kbdTracking: 2,
-      contourAmount: 0.35, cutoff: 0.7, emphasis: 0.25,
+      contourAmount: 0.35, cutoff: 0.7, emphasis: 0.25, velTrack: 0,
       fAttack: 0.05, fDecay: 0.45, fSustain: 0.4, fRelease: 0.2,
       lAttack: 0.03, lDecay: 0.5, lSustain: 0.85, lRelease: 0.25,
       modFxOn: 0, modFxType: 0, modFxTime: 0.35, modFxDepth: 0.5,
@@ -418,7 +420,7 @@ class ApertureProcessor extends AudioWorkletProcessor {
     this.s = { ...this.p };
     this.INSTANT = new Set([
       'oscMod', 'osc2Mod', 'modShape', 'osc1Octave', 'sync', 'osc1Wave', 'osc2Octave',
-      'osc2Wave', 'subOctave', 'filterMod', 'kbdTracking',
+      'osc2Wave', 'subOctave', 'filterMod', 'kbdTracking', 'velTrack',
       'modFxOn', 'modFxType', 'dlyOn', 'dlySync', 'dlyType', 'revOn', 'revType',
     ]);
 
@@ -469,6 +471,8 @@ class ApertureProcessor extends AudioWorkletProcessor {
     };
     this.seqVelTarget = 1;
     this.seqVel = 1;
+    this.strikeVel = 0.8;   // last note-on velocity (live or sequencer)
+    this.sVel = 0.8;
 
     this.port.onmessage = (e) => this.onMessage(e.data);
   }
@@ -480,7 +484,8 @@ class ApertureProcessor extends AudioWorkletProcessor {
         if (this.INSTANT.has(m.id)) this.s[m.id] = m.v;
         break;
       case 'on':
-        this.seqVelTarget = 1; // live playing stays velocity-insensitive (heritage)
+        this.seqVelTarget = 1; // live loudness stays velocity-insensitive (heritage)
+        this.strikeVel = m.v != null ? m.v : 0.8; // but VEL TRACK can steer the filter
         this.noteOn(m.n);
         break;
       case 'off': this.noteOff(m.n); break;
@@ -524,6 +529,7 @@ class ApertureProcessor extends AudioWorkletProcessor {
           cutHz: this.d.cutHz, envL: this.envL.v, envF: this.envF.v,
           seq: { playing: this.seq.playing, pos: this.seq.pos, bpm: this.seq.bpm, len: this.seq.len },
           growl: this.d.growl,
+          strikeVel: this.strikeVel,
         });
         break;
       default:
@@ -655,8 +661,11 @@ class ApertureProcessor extends AudioWorkletProcessor {
     const trackOct = (track * (this.glideNote - KBD_TRACK_CENTER)) / 12;
     const fModOct = s.filterMod ? mw * FILTER_MOD_OCT * this.lfoVal : 0;
     const contourOct = CONTOUR_OCT * s.contourAmount * this.envF.v;
+    // VEL TRACK: full velocity = knob setting; softer strikes close the filter
+    this.sVel += (this.strikeVel - this.sVel) * 0.28;
+    const velOct = s.velTrack >= 1 ? -(1 - this.sVel) * VEL_TRACK_OCT : 0;
     const baseHz = CUT_MIN_HZ * Math.pow(CUT_MAX_HZ / CUT_MIN_HZ, s.cutoff);
-    let hz = baseHz * Math.pow(2, trackOct + fModOct + contourOct);
+    let hz = baseHz * Math.pow(2, trackOct + fModOct + contourOct + velOct);
     hz = Math.min(Math.max(hz, 5), this.fsOS * 0.22);
     this.d.cutHz = hz;
     this.d.gBase = 1 - Math.exp((-TWO_PI * hz) / this.fsOS);
@@ -695,7 +704,9 @@ class ApertureProcessor extends AudioWorkletProcessor {
       if (!tieContinues) {
         if (q.curNote >= 0) { this.noteOff(q.curNote); q.curNote = -1; }
         if (st && st.on) {
-          this.seqVelTarget = 0.25 + 0.75 * (st.vel != null ? st.vel : 0.8);
+          const vel = st.vel != null ? st.vel : 0.8;
+          this.seqVelTarget = 0.25 + 0.75 * vel;
+          this.strikeVel = vel; // step velocity steers VEL TRACK too
           this.noteOn(st.note);
           q.curNote = st.note;
         }

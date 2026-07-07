@@ -426,9 +426,10 @@ function buildSections(svg) {
     sectionTitle(svg, 4, 'FILTER');
     const cx = (SECT_X[4] + SECT_X[5]) / 2;
     buildKnob(svg, 'cutoff', cx, 168, 28, { label: 'CUTOFF' });
-    buildKnob(svg, 'emphasis', SECT_X[4] + 50, 340, 18, { label: 'EMPHASIS' });
-    mono(svg, SECT_X[4] + 50, 378, 'SELF OSC →', 6, { fill: C.faint });
-    buildKnob(svg, 'contourAmount', SECT_X[5] - 50, 340, 18, { label: 'CONTOUR' });
+    buildLatch(svg, 'velTrack', cx, 254, { label: 'VEL→CUTOFF', size: 24 });
+    buildKnob(svg, 'emphasis', SECT_X[4] + 50, 348, 18, { label: 'EMPHASIS' });
+    mono(svg, SECT_X[4] + 50, 386, 'SELF OSC →', 6, { fill: C.faint });
+    buildKnob(svg, 'contourAmount', SECT_X[5] - 50, 348, 18, { label: 'CONTOUR' });
   }
 
   // -- 6/7: contour slider banks
