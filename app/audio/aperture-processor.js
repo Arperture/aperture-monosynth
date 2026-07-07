@@ -464,7 +464,7 @@ class ApertureProcessor extends AudioWorkletProcessor {
 
     this.seq = {
       steps: Array.from({ length: SEQ_STEPS }, () => ({ on: false, note: 45, vel: 0.8, tie: false, locks: null })),
-      playing: false, bpm: 120, pos: -1, counter: 0, spb: 0,
+      playing: false, bpm: 120, len: SEQ_STEPS, pos: -1, counter: 0, spb: 0,
       gateCounter: 0, curNote: -1,
     };
     this.seqVelTarget = 1;
@@ -500,6 +500,10 @@ class ApertureProcessor extends AudioWorkletProcessor {
       case 'bpm':
         this.seq.bpm = Math.max(40, Math.min(240, m.v));
         break;
+      case 'seqLen':
+        this.seq.len = m.v === 16 ? 16 : 32;
+        if (this.seq.pos >= this.seq.len) this.seq.pos = -1;
+        break;
       case 'seqCmd':
         if (m.cmd === 'start') {
           this.seq.pos = -1; this.seq.counter = 0; this.seq.playing = true;
@@ -518,7 +522,7 @@ class ApertureProcessor extends AudioWorkletProcessor {
           glideRate: this.glideRate,
           held: [...this.heldNotes], gate: this.gate,
           cutHz: this.d.cutHz, envL: this.envL.v, envF: this.envF.v,
-          seq: { playing: this.seq.playing, pos: this.seq.pos, bpm: this.seq.bpm },
+          seq: { playing: this.seq.playing, pos: this.seq.pos, bpm: this.seq.bpm, len: this.seq.len },
           growl: this.d.growl,
         });
         break;
@@ -680,18 +684,17 @@ class ApertureProcessor extends AudioWorkletProcessor {
     const q = this.seq;
     if (!q.playing) return;
     if (q.counter <= 0) {
-      q.pos = (q.pos + 1) % SEQ_STEPS;
+      q.pos = (q.pos + 1) % q.len;
       q.spb = Math.round((sampleRate * 15) / q.bpm);
       q.counter = q.spb;
       const st = q.steps[q.pos];
+      // locks (p-locks / panel snapshots) apply on every step that carries
+      // them — including rests — and latch until another step changes them
+      if (st && st.locks) this.applyLocks(st.locks);
       const tieContinues = st && st.on && st.tie && q.curNote >= 0;
-      if (tieContinues) {
-        // tied step: previous note holds through, no retrigger — locks still apply
-        if (st.locks) this.applyLocks(st.locks);
-      } else {
+      if (!tieContinues) {
         if (q.curNote >= 0) { this.noteOff(q.curNote); q.curNote = -1; }
         if (st && st.on) {
-          if (st.locks) this.applyLocks(st.locks);
           this.seqVelTarget = 0.25 + 0.75 * (st.vel != null ? st.vel : 0.8);
           this.noteOn(st.note);
           q.curNote = st.note;
@@ -699,7 +702,7 @@ class ApertureProcessor extends AudioWorkletProcessor {
       }
       if (q.curNote >= 0) {
         // hold the full step when the NEXT step ties into this note
-        const nxt = q.steps[(q.pos + 1) % SEQ_STEPS];
+        const nxt = q.steps[(q.pos + 1) % q.len];
         q.gateCounter = (nxt && nxt.on && nxt.tie) ? 0 : Math.round(q.spb * SEQ_GATE);
       } else {
         q.gateCounter = 0; // rest

@@ -174,3 +174,63 @@ html, body {
   white-space: nowrap;
 }
 #learn-popup.show { opacity: 1; }
+
+/* ---- sequence bank strip group ---- */
+
+.strip-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: #5D6673;
+}
+#seq-slot { min-width: 110px; }
+#seq-init.confirm { border-color: var(--gold-bright); color: var(--gold-bright); }
+
+/* ---- step context menu ---- */
+
+#step-menu {
+  position: fixed;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--ink-850);
+  border: 1px solid var(--cyan);
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.6), 0 0 18px rgba(46, 204, 250, 0.14);
+  z-index: 30;
+  font-family: 'Space Mono', monospace;
+  color: var(--silver);
+}
+#step-menu.show { display: flex; }
+
+#step-menu .sm-title {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--cyan-bright);
+}
+#step-menu .sm-row { display: flex; align-items: center; gap: 8px; }
+#step-menu .sm-label { font-size: 9px; letter-spacing: 0.14em; color: #5D6673; width: 34px; }
+#step-menu .sm-current { font-size: 11px; color: var(--cyan-bright); min-width: 34px; text-align: right; }
+
+#step-menu select,
+#step-menu .sm-btn {
+  font: 400 11px/1 'Space Mono', monospace;
+  color: var(--silver);
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 5px 8px;
+  cursor: pointer;
+  outline: none;
+}
+#step-menu .sm-btn:hover { border-color: var(--cyan); color: var(--cyan-bright); }
+#step-menu .sm-btn.sm-on { border-color: var(--cyan); color: var(--cyan-bright); }
+#step-menu .sm-btn.sm-accent { border-color: rgba(46, 204, 250, 0.4); }
+#step-menu .sm-btn.sm-danger:hover { border-color: var(--gold-bright); color: var(--gold-bright); }
+
+#step-menu input[type="range"] {
+  width: 130px;
+  accent-color: var(--cyan);
+}
+#step-menu .sm-hint { font-size: 8px; letter-spacing: 0.08em; color: #5D6673; }

@@ -21,6 +21,13 @@
           <button id="preset-delete" title="Delete the selected user preset">Delete</button>
           <button id="preset-init" title="Reset panel to the init patch">Init</button>
         </div>
+        <div class="strip-group" id="seq-bank">
+          <span class="strip-label">SEQ</span>
+          <select id="seq-slot" title="Sequence slot (128 per bank)"></select>
+          <button id="seq-save" title="Save the current sequence to this slot">Save</button>
+          <button id="seq-load" title="Load the sequence in this slot">Load</button>
+          <button id="seq-init" title="Clear all sequencer data (click twice)">Init</button>
+        </div>
         <div class="strip-group strip-right">
           <span id="kbd-hint">keys A–' play &nbsp;·&nbsp; Z/X octave <b id="octave-label">C2</b></span>
           <span id="midi-status"><i id="midi-led"></i><span id="midi-name">no MIDI device</span></span>

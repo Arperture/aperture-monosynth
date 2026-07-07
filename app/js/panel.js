@@ -612,9 +612,22 @@ function buildSequencer(svg) {
   bpm.id = 'bpm-readout';
   mono(svg, q.x + 306, q.y + 80, 'BPM', 7, { anchor: 'start', fill: C.faint });
 
+  // STEPS length selector (16 / 32)
+  mono(svg, q.x + 124, q.y + 112, 'STEPS', 7, { anchor: 'start', fill: C.faint });
+  for (const [i, len] of [[0, 16], [1, 32]].values()) {
+    const bx = q.x + 172 + i * 30;
+    const g = el('g', { 'data-widget': 'seqlen', 'data-len': len }, svg);
+    el('rect', {
+      'data-lenface': len, x: bx, y: q.y + 98, width: 24, height: 20, rx: 5,
+      fill: C.surface, stroke: C.btnStroke, 'stroke-width': 0.9,
+    }, g);
+    mono(g, bx + 12, q.y + 111.5, String(len), 7.5, { fill: C.muted });
+    el('rect', { x: bx - 2, y: q.y + 95, width: 28, height: 26, fill: 'transparent' }, g);
+  }
+
   // hint
-  mono(svg, q.x + 20, q.y + 130, 'REC+STOP: STEP RECORD · REC+PLAY: MOTION REC', 6.5, { anchor: 'start', fill: C.faint });
-  mono(svg, q.x + 20, q.y + 144, 'ALT+CLICK: TIE · SHIFT+CLICK: CLEAR · OFF STEP = REST', 6.5, { anchor: 'start', fill: C.faint });
+  mono(svg, q.x + 20, q.y + 138, 'RIGHT-CLICK A STEP: NOTE / VEL / SNAPSHOT MENU', 6.5, { anchor: 'start', fill: C.faint });
+  mono(svg, q.x + 20, q.y + 152, 'REC+PLAY: MOTION REC · ALT+CLICK: TIE · SHIFT+CLICK: CLEAR', 6.5, { anchor: 'start', fill: C.faint });
 
   // 16 step buttons + tie LEDs in the gaps between them
   const sx0 = q.x + 396, pitch = 75.5, size = 56;

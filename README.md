@@ -59,7 +59,19 @@ motion locks) · unlit = rest · coral outline = record cursor.**
   with the pattern (they animate the panel as they fire).
 - Per-step **velocity** scales the VCA like an accent (live keyboard playing
   stays velocity-insensitive — heritage behavior; mouse/computer keys record 0.8).
-- PLAY/REC, TEMPO knob (40–240) + BPM readout. The pattern and tempo persist.
+- **Right-click a step** for the step menu: pick the **note by name/octave**
+  (C0–B8, no keyboard needed), set **velocity 0–127**, toggle TIE, or **CLEAR**.
+- **SNAPSHOT** (in the step menu) locks *every* panel setting to that step —
+  when the playhead lands there the whole panel jumps to the saved state and
+  latches until a later step (lock or snapshot) changes it. Snapshots work on
+  rests too, so you can automate the panel without triggering a note.
+- **STEPS 16/32** selector by the transport switches the pattern length
+  (bar 2 dims in 16-step mode).
+- PLAY/REC, TEMPO knob (40–240) + BPM readout. The working pattern and tempo persist.
+- **Sequence bank**: 128 slots in the bottom strip — pick a slot, **Save** /
+  **Load** (a ● marks filled slots). Saved sequences carry their steps, ties,
+  velocities, locks/snapshots, tempo, and length. **Init** (click twice)
+  clears the working sequence.
 
 ## MIDI Learn
 

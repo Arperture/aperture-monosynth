@@ -214,8 +214,21 @@ export class PanelUI {
     if (!face) return;
     face.setAttribute('fill', st.play ? C.ledOn : st.view ? C.surface2 : C.surface);
     face.setAttribute('stroke', st.play ? C.cyanBright : st.view ? C.cyan : C.btnStroke);
+    face.setAttribute('opacity', st.disabled ? '0.3' : '1');
     if (st.play) face.setAttribute('filter', 'url(#glow)');
     else face.removeAttribute('filter');
+  }
+
+  paintSeqLen(len) {
+    for (const l of [16, 32]) {
+      const face = this.svg.querySelector(`[data-lenface="${l}"]`);
+      if (!face) continue;
+      const active = l === len;
+      face.setAttribute('fill', active ? C.ledOn : C.surface);
+      face.setAttribute('stroke', active ? C.cyan : C.btnStroke);
+      const label = face.parentNode.querySelector('text');
+      if (label) label.setAttribute('fill', active ? C.cyanBright : C.muted);
+    }
   }
 
   paintTransport({ playing, rec }) {
@@ -270,6 +283,13 @@ export class PanelUI {
     svg.addEventListener('pointerdown', (e) => this.pointerDown(e));
     window.addEventListener('pointermove', (e) => this.pointerMove(e));
     window.addEventListener('pointerup', () => this.pointerUp());
+    svg.addEventListener('contextmenu', (e) => {
+      const step = e.target.closest?.('[data-widget="step"]');
+      if (step) {
+        e.preventDefault();
+        this.h.onStepMenu(+step.dataset.step, e.clientX, e.clientY);
+      }
+    });
     svg.addEventListener('dblclick', (e) => this.doubleClick(e));
     svg.addEventListener('wheel', (e) => this.wheelScroll(e), { passive: false });
     svg.addEventListener('pointerover', (e) => {
@@ -341,6 +361,9 @@ export class PanelUI {
         return;
       case 'tieled':
         this.h.onTieClick(+t.dataset.tie);
+        return;
+      case 'seqlen':
+        this.h.onSeqLen(+t.dataset.len);
         return;
       case 'barled':
         this.h.onBarClick(+t.dataset.bar);

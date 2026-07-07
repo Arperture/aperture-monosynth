@@ -8,7 +8,8 @@ import { PARAM_BY_ID, defaultState } from './params.js';
 import { initMidi } from './midi.js';
 import { MidiLearn } from './midi-learn.js';
 import { Qwerty } from './qwerty.js';
-import { Sequencer } from './sequencer.js';
+import { Sequencer, BANK_SIZE } from './sequencer.js';
+import { StepMenu } from './step-menu.js';
 import {
   FACTORY, loadUserPresets, saveUserPresets, loadPanelState, savePanelState,
 } from './presets.js';
@@ -133,6 +134,8 @@ const ui = new PanelUI(svg, {
   onRec() { seq.toggleRec(); },
   onMidiLearn() { learn.toggle(); },
   onLearnPick(id, shift) { learn.pick(id, shift); },
+  onSeqLen(len) { seq.setLen(len); },
+  onStepMenu(i16, x, y) { stepMenu.show(seq.abs(i16), x, y); },
 });
 
 const learn = new MidiLearn(ui);
@@ -147,6 +150,25 @@ const seq = new Sequencer({
   paintBar: (b, st) => { ui.paintBar(b, st); ui.paintStepNumbers(seq.viewPage); },
   paintTransport: (st) => ui.paintTransport(st),
   paintBpm: (bpm) => ui.paintBpm(bpm),
+  paintSeqLen: (len) => ui.paintSeqLen(len),
+});
+
+// snapshot captures every engine param (seq-owned knobs like tempo excluded)
+function panelSnapshot() {
+  const snap = {};
+  for (const [id, v] of Object.entries(state)) {
+    if (!PARAM_BY_ID[id]?.seq) snap[id] = v;
+  }
+  return snap;
+}
+
+const stepMenu = new StepMenu({
+  getStep: (i) => seq.steps[i],
+  setNote: (i, midi) => seq.setStepNote(i, midi),
+  setVel: (i, v127) => seq.setStepVel(i, v127),
+  setTie: (i, on) => seq.setStepTie(i, on),
+  snapshot: (i) => seq.snapshotStep(i, panelSnapshot()),
+  clearStep: (i) => seq.clearStep(i),
 });
 
 async function setPower(on) {
@@ -301,6 +323,54 @@ document.getElementById('preset-delete').addEventListener('click', () => {
 });
 
 refreshPresetList('f:Init');
+
+// ---- sequence bank (128 slots) -----------------------------------------------------
+
+const slotSel = document.getElementById('seq-slot');
+
+function refreshSlotList(keep) {
+  const bank = seq.loadBank();
+  const cur = keep ?? slotSel.value ?? '0';
+  slotSel.innerHTML = '';
+  for (let i = 0; i < BANK_SIZE; i++) {
+    const o = document.createElement('option');
+    o.value = i;
+    const n = String(i + 1).padStart(3, '0');
+    o.textContent = bank[i] ? `${n} ●` : `${n} · empty`;
+    slotSel.appendChild(o);
+  }
+  slotSel.value = cur;
+}
+
+document.getElementById('seq-save').addEventListener('click', () => {
+  seq.saveSlot(+slotSel.value);
+  refreshSlotList();
+});
+
+document.getElementById('seq-load').addEventListener('click', () => {
+  seq.loadSlot(+slotSel.value);
+});
+
+// INIT clears everything — two clicks within 2 s to confirm
+const seqInitBtn = document.getElementById('seq-init');
+let initArmTimer = null;
+seqInitBtn.addEventListener('click', () => {
+  if (seqInitBtn.classList.contains('confirm')) {
+    clearTimeout(initArmTimer);
+    seqInitBtn.classList.remove('confirm');
+    seqInitBtn.textContent = 'Init';
+    seq.initAll();
+  } else {
+    seqInitBtn.classList.add('confirm');
+    seqInitBtn.textContent = 'Sure?';
+    initArmTimer = setTimeout(() => {
+      seqInitBtn.classList.remove('confirm');
+      seqInitBtn.textContent = 'Init';
+    }, 2000);
+  }
+});
+
+refreshSlotList('0');
 
 // ---- window scaling ---------------------------------------------------------------
 

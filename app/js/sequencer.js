@@ -20,8 +20,14 @@
 //   · bar LEDs            -> click to view bar 1/2; view auto-follows while playing
 
 const LS_KEY = 'aperture.sequence';
+const LS_BANK = 'aperture.seqBank';
+export const BANK_SIZE = 128;
 const DEFAULT_NOTE = 45; // A2
 const DEFAULT_VEL = 0.8;
+
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+export const midiToName = (n) => `${NOTE_NAMES[n % 12]}${Math.floor(n / 12) - 1}`;
+export { NOTE_NAMES };
 
 export class Sequencer {
   /**
@@ -43,10 +49,15 @@ export class Sequencer {
     this.playPos = -1;      // playhead from the worklet
     this.viewPage = 0;      // 0 = steps 1-16, 1 = steps 17-32
     this.bpm = 120;
+    this.len = 32;          // 16 or 32 steps
     this.lastNote = DEFAULT_NOTE;
     this.saveTimer = null;
 
     this.load();
+  }
+
+  blankStep() {
+    return { on: false, note: DEFAULT_NOTE, vel: DEFAULT_VEL, tie: false, locks: null };
   }
 
   // ---- persistence ------------------------------------------------------
@@ -64,13 +75,14 @@ export class Sequencer {
         }));
       }
       if (d && d.bpm) this.bpm = d.bpm;
+      if (d && (d.len === 16 || d.len === 32)) this.len = d.len;
     } catch { /* fresh start */ }
   }
 
   saveSoon() {
     clearTimeout(this.saveTimer);
     this.saveTimer = setTimeout(() => {
-      localStorage.setItem(LS_KEY, JSON.stringify({ steps: this.steps, bpm: this.bpm }));
+      localStorage.setItem(LS_KEY, JSON.stringify({ steps: this.steps, bpm: this.bpm, len: this.len }));
     }, 300);
   }
 
@@ -79,6 +91,7 @@ export class Sequencer {
   pushAll() {
     this.io.send({ t: 'seqSteps', steps: this.steps });
     this.io.send({ t: 'bpm', v: this.bpm });
+    this.io.send({ t: 'seqLen', v: this.len });
   }
 
   pushStep(i) {
@@ -156,10 +169,101 @@ export class Sequencer {
 
   // Toggle the tie of the step this gap leads into (LED between i16 and i16+1).
   tieClicked(i16) {
-    const i = (this.abs(i16) + 1) % 32;
+    const i = (this.abs(i16) + 1) % this.len;
     this.steps[i].tie = !this.steps[i].tie;
     this.pushStep(i);
     this.repaintPage();
+  }
+
+  // ---- step editing (context menu) ----------------------------------------
+
+  setStepNote(i, midiNote) {
+    const st = this.steps[i];
+    st.note = midiNote;
+    st.on = true;
+    this.lastNote = midiNote;
+    this.pushStep(i);
+    this.repaintPage();
+  }
+
+  setStepVel(i, v127) {
+    this.steps[i].vel = Math.max(0, Math.min(127, v127)) / 127;
+    this.pushStep(i);
+  }
+
+  setStepTie(i, tie) {
+    this.steps[i].tie = !!tie;
+    this.pushStep(i);
+    this.repaintPage();
+  }
+
+  // Panel snapshot: every engine parameter locked to this step; values latch
+  // at playback until a later step changes them.
+  snapshotStep(i, panelState) {
+    this.steps[i].locks = { ...panelState };
+    this.pushStep(i);
+    this.repaintPage();
+  }
+
+  clearStep(i) {
+    this.steps[i] = this.blankStep();
+    this.pushStep(i);
+    this.repaintPage();
+  }
+
+  // ---- length / init / bank -------------------------------------------------
+
+  setLen(len) {
+    this.len = len === 16 ? 16 : 32;
+    if (this.len === 16) {
+      this.cursor %= 16;
+      if (this.viewPage === 1) this.viewPage = 0;
+    }
+    this.io.send({ t: 'seqLen', v: this.len });
+    this.io.paintSeqLen(this.len);
+    this.repaintPage();
+    this.repaintBars();
+    this.saveSoon();
+  }
+
+  initAll() {
+    this.steps = Array.from({ length: 32 }, () => this.blankStep());
+    this.cursor = 0;
+    this.pushAll();
+    this.repaintPage();
+    this.repaintBars();
+    this.saveSoon();
+  }
+
+  loadBank() {
+    try {
+      const b = JSON.parse(localStorage.getItem(LS_BANK));
+      if (Array.isArray(b) && b.length === BANK_SIZE) return b;
+    } catch { /* fresh bank */ }
+    return Array.from({ length: BANK_SIZE }, () => null);
+  }
+
+  saveSlot(n) {
+    const bank = this.loadBank();
+    bank[n] = { steps: this.steps, bpm: this.bpm, len: this.len };
+    localStorage.setItem(LS_BANK, JSON.stringify(bank));
+  }
+
+  loadSlot(n) {
+    const bank = this.loadBank();
+    const d = bank[n];
+    if (!d) return false;
+    this.steps = d.steps.map((s) => ({ ...this.blankStep(), ...s }));
+    this.bpm = d.bpm || 120;
+    this.len = d.len === 16 ? 16 : 32;
+    this.cursor = 0;
+    if (this.viewPage === 1 && this.len === 16) this.viewPage = 0;
+    this.pushAll();
+    this.io.paintSeqLen(this.len);
+    this.io.paintBpm(this.bpm);
+    this.repaintAll();
+    this.saveSoon();
+    return true;
   }
 
   // A note was played (any source). Recording (note + velocity) is a side effect.
@@ -181,7 +285,7 @@ export class Sequencer {
       st.note = note;
       st.vel = vel;
       this.pushStep(this.cursor);
-      this.cursor = (this.cursor + 1) % 32;
+      this.cursor = (this.cursor + 1) % this.len;
       const page = Math.floor(this.cursor / 16);
       if (page !== this.viewPage) this.viewPage = page;
       this.repaintPage();
@@ -203,6 +307,7 @@ export class Sequencer {
 
   barClicked(bar) {
     if (bar === this.viewPage) return;
+    if (bar === 1 && this.len === 16) return; // bar 2 disabled in 16-step mode
     this.viewPage = bar;
     this.repaintPage();
     this.repaintBars();
@@ -235,6 +340,7 @@ export class Sequencer {
         view: this.viewPage === b,
         play: this.playing && playBar === b,
         playing: this.playing,
+        disabled: b === 1 && this.len === 16,
       });
     }
   }
@@ -244,5 +350,6 @@ export class Sequencer {
     this.repaintBars();
     this.io.paintTransport({ playing: this.playing, rec: this.recArmed });
     this.io.paintBpm(this.bpm);
+    this.io.paintSeqLen(this.len);
   }
 }
