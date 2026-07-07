@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aperture</title>
+  <link rel="stylesheet" href="css/panel.css" />
+</head>
+<body>
+  <div id="stage">
+    <div id="unit-wrap">
+      <!-- The whole instrument is one SVG, built by js/panel.js -->
+      <svg id="unit" xmlns="http://www.w3.org/2000/svg"></svg>
+
+      <!-- Preset / status strip (not part of the panel artwork) -->
+      <div id="strip">
+        <div class="strip-group">
+          <select id="preset-select" title="Preset"></select>
+          <button id="preset-save" title="Overwrite the selected user preset">Save</button>
+          <button id="preset-saveas" title="Save current panel as a new preset">Save As</button>
+          <button id="preset-delete" title="Delete the selected user preset">Delete</button>
+          <button id="preset-init" title="Reset panel to the init patch">Init</button>
+        </div>
+        <div class="strip-group strip-right">
+          <span id="kbd-hint">keys A–' play &nbsp;·&nbsp; Z/X octave <b id="octave-label">C2</b></span>
+          <span id="midi-status"><i id="midi-led"></i><span id="midi-name">no MIDI device</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

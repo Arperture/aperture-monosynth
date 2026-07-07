@@ -1,0 +1,31 @@
+{
+  "name": "aperture-synth",
+  "productName": "Aperture",
+  "version": "1.0.0",
+  "description": "Aperture — Arperture Media noir-edition mono synth with sub oscillator, step sequencer, and FX",
+  "main": "main.js",
+  "author": "Arperture Music",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "package": "electron-builder --mac --dir"
+  },
+  "build": {
+    "appId": "com.arperture.aperture",
+    "productName": "Aperture",
+    "files": [
+      "main.js",
+      "app/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "target": "dir",
+      "identity": null,
+      "category": "public.app-category.music"
+    }
+  },
+  "devDependencies": {
+    "electron": "^43.0.0",
+    "electron-builder": "^26.15.3"
+  }
+}

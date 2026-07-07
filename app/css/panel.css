@@ -1,0 +1,145 @@
+/* Aperture — noir chrome. All instrument artwork lives in the SVG (js/panel.js).
+   Brand fonts self-hosted in assets/fonts (Fontshare / Google, free licenses). */
+
+@font-face {
+  font-family: 'Clash Display';
+  src: url('../assets/fonts/clash-display-500.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Clash Display';
+  src: url('../assets/fonts/clash-display-600.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Hanken Grotesk';
+  src: url('../assets/fonts/hankengrotesk-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Hanken Grotesk';
+  src: url('../assets/fonts/hankengrotesk-600.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Mono';
+  src: url('../assets/fonts/spacemono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Mono';
+  src: url('../assets/fonts/spacemono-700.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --ink-950: #12161D;
+  --ink-900: #161B23;
+  --ink-850: #1D232D;
+  --ink-800: #242B36;
+  --gold: #C9A227;
+  --gold-bright: #F0C64A;
+  --cyan: #2ECCFA;
+  --cyan-bright: #5DD9FB;
+  --silver: #C5CBD6;
+  --muted: #97A0AE;
+  --line: rgba(255, 255, 255, 0.09);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: var(--ink-950);
+  overflow: hidden;
+  font-family: 'Hanken Grotesk', 'Helvetica Neue', system-ui, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#stage {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#unit-wrap {
+  width: 1680px;
+  transform: scale(var(--unit-scale, 1));
+  transform-origin: center center;
+}
+
+#unit {
+  display: block;
+  width: 1680px;
+  height: 1180px;
+}
+
+/* ---- preset / status strip ---- */
+
+#strip {
+  margin-top: 8px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  background: var(--ink-900);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+.strip-group { display: flex; align-items: center; gap: 8px; }
+
+#strip select,
+#strip button {
+  font: 600 12px/1 'Hanken Grotesk', sans-serif;
+  letter-spacing: 0.04em;
+  color: var(--silver);
+  background: var(--ink-850);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  outline: none;
+}
+
+#strip select { min-width: 170px; }
+#strip button:hover { border-color: var(--cyan); color: var(--cyan-bright); }
+#strip button:active { background: var(--ink-950); }
+
+#kbd-hint {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: #5D6673;
+}
+#kbd-hint b { color: var(--cyan); font-weight: 700; }
+
+#midi-status { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; }
+#midi-led {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #2A2A2E;
+}
+#midi-led.on {
+  background: var(--cyan-bright);
+  box-shadow: 0 0 6px rgba(93, 217, 251, 0.55);
+}
+#midi-name { font-family: 'Space Mono', monospace; font-size: 10px; color: #5D6673; }
+#midi-name.on { color: var(--silver); }
+
+/* ---- SVG interaction affordances ---- */
+
+#unit text { pointer-events: none; }
+#unit [data-widget] { cursor: pointer; }
+#unit [data-widget="knob"],
+#unit [data-widget="wheel"],
+#unit [data-widget="slider"] { cursor: ns-resize; }

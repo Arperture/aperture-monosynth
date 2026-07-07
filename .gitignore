@@ -1,0 +1,12 @@
+# dependencies / build output
+node_modules/
+dist/
+
+# macOS
+.DS_Store
+
+# Clash Display is licensed under the Fontshare Free Font License, which does
+# not permit redistributing the font files — fetch them locally instead:
+#   ./scripts/fetch-fonts.sh
+# (Hanken Grotesk and Space Mono are SIL OFL and are committed.)
+app/assets/fonts/clash-display-*.woff2
